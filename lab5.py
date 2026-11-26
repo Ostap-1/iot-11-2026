@@ -1,3 +1,6 @@
+CANDIDATES_COUNT = 5
+
+
 class Candidate:
     def __init__(self, name, votes):
         self._name = name
@@ -19,22 +22,22 @@ class Candidate:
         self._votes = votes
 
     def show(self, total):
-        print(f"{self._name} {self._votes} {self._votes / total * 100:.2f}%")
+        percent = self._votes / total * 100 if total else 0
+        print(f"{self._name:<15} {self._votes:>5} {percent:6.2f}%")
 
 
 class Elections:
     def __init__(self):
         self._candidates = []
 
-    #
-    def set_candidates(self, candidates):
-        self._candidates = candidates
-        
-    def get_candidates(self):
-        return self._candidates
-    
     def __del__(self):
         print("Вибори видалено")
+
+    def set_candidates(self, candidates):
+        self._candidates = list(candidates)
+
+    def get_candidates(self):
+        return self._candidates
 
     def add_candidate(self, candidate):
         self._candidates.append(candidate)
@@ -43,7 +46,7 @@ class Elections:
         return sum(c.get_votes() for c in self._candidates)
 
     def winner(self):
-        return max(self._candidates, key=lambda c: c.get_votes())
+        return max(self._candidates, key=lambda c: c.get_votes(), default=None)
 
     def show(self):
         total = self.get_total()
@@ -54,9 +57,16 @@ class Elections:
 def main():
     elections = Elections()
 
-    for i in range(5):
+    for i in range(CANDIDATES_COUNT):
         name = input(f"Прізвище кандидата {i + 1}: ")
-        votes = int(input("Кількість голосів: "))
+        while True:
+            try:
+                votes = int(input("Кількість голосів: "))
+                if votes >= 0:
+                    break
+                print("Голосів не може бути менше 0")
+            except ValueError:
+                print("Введіть ціле число")
         elections.add_candidate(Candidate(name, votes))
 
     print()
@@ -64,11 +74,14 @@ def main():
     print("Переможець:", elections.winner().get_name())
 
     elections2 = Elections()
-    elections2.set_candidates(elections.get_candidates()[:3])
+    elections2.set_candidates(
+        [Candidate(c.get_name(), c.get_votes())
+         for c in elections.get_candidates()[:3]]
+    )
 
     print()
-    for i2 in elections2.get_candidates():
-        print(i2.get_name(), i2.get_votes())
+    for candidate in elections2.get_candidates():
+        print(candidate.get_name(), candidate.get_votes())
 
     print()
     del elections
